@@ -1,0 +1,6 @@
+node_modules/
+build/
+truffle-config.js
+.env
+package.json
+package-lock.json
