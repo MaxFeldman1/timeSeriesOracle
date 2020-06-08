@@ -31,7 +31,7 @@ module.exports = async function(callback) {
 		transferAmount = 1000*subUnits;
 
 		asset0.transfer(pairInstance.address, transferAmount*targetPrice);
-		asset1.transfer(pairInstance.address, transferAmount);
+		await asset1.transfer(pairInstance.address, transferAmount);
 		await pairInstance.mint(web3.eth.defaultAccount);
 
 		token0 = await pairInstance.token0();

@@ -4,11 +4,18 @@ const uniswapPair = artifacts.require('./UniswapV2Pair.sol');
 const uniswapERC20 = artifacts.require('./UniswapV2ERC20.sol');
 const oracle = artifacts.require("./oracle.sol");
 
+var pairInstance;
+var asset0;
+var asset1;
+var subUnits;
+var setPrice;
+
 contract('oracle', async function(accounts) {
 
 	web3.eth.defaultAccount = accounts[0];
 
 	it('before each', async() => {
+		try {
 		factoryInstance = await uniswapFactory.new(web3.eth.defaultAccount);
 
 		asset0 = await token.new(0);
@@ -22,21 +29,38 @@ contract('oracle', async function(accounts) {
 
 		subUnits = Math.pow(10, (await asset0.decimals()));
 
+		} catch (err) {
+			console.error(err.message);
+			throw(err);
+		}
 
 	});
+
+	async function setPrice(spot) {
+		var liquidityBalance = (await pairInstance.balanceOf(web3.eth.defaultAccount)).toNumber();
+		pairInstance.transfer(pairInstance.address, liquidityBalance);
+		await pairInstance.burn(web3.eth.defaultAccount);
+		asset0.transfer(pairInstance.address, Math.floor(subUnits*spot));
+		asset1.transfer(pairInstance.address, subUnits);
+		pairInstance.mint(web3.eth.defaultAccount);
+		await oracleInstance.set();
+	}
 
 	it('sets / reads price correctly from uniswap', async() => {
-		targetPrice = 5;
-		transferAmount = 1000*subUnits;
+		try {
+		var targetPrice = 5;
 
-		asset0.transfer(pairInstance.address, transferAmount*targetPrice);
-		asset1.transfer(pairInstance.address, transferAmount);
-		await pairInstance.mint(web3.eth.defaultAccount);
-		token0 = await pairInstance.token0();
-		reserves = await pairInstance.getReserves();
-		await oracleInstance.set();
-		oraclePrice = (await oracleInstance.latestSpot()).toNumber() / (await oracleInstance.inflator()).toNumber();
+		await setPrice(targetPrice, pairInstance, asset0, asset1, oracleInstance);
+		console.log("here");
+		var reserves = await pairInstance.getReserves();
+		var oraclePrice = (await oracleInstance.latestSpot()).toNumber() / (await oracleInstance.inflator()).toNumber();
 		assert.equal(oraclePrice, targetPrice, "oracle correctly sets price");
+		} catch (err) {
+			console.log(err.message);
+			throw(err);
+		}
 	});
 
+
+	//it('gets median pri')
 });

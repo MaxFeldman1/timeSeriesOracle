@@ -84,7 +84,7 @@ contract oracle{
 
     }
 
-    function median3UpToIndex(uint _index) public view returns (uint) {
+    function medianPreviousIndecies(uint _index) public view returns (uint) {
         require(_index > 1, "index must be 2 or greater");
         uint first = tsToSpot[timestamps[heights[_index-2]]];
         uint second = tsToSpot[timestamps[heights[_index-1]]];
@@ -93,6 +93,10 @@ contract oracle{
         (second,third) = second > third ? (second, third) : (third,second);
         (first,second) = first > second ? (first, second) : (second,first);
         return second;
+    }
+
+    function tsToPrice(uint _time) external view returns (uint) {
+        return medianPreviousIndecies(tsToIndex(_time));
     }
 
     function height() public view returns(uint){
