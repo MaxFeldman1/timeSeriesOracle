@@ -6,7 +6,8 @@ contract oracle{
     uint public latestSpot;
 
     //lists all block heights at which spot is collected
-    uint[] heights;
+    uint[] public heights;
+    function heightsLength() external view returns (uint length) {length = heights.length;}
     //height => timestamp
     mapping(uint => uint) public timestamps;
     //timestamp => price
@@ -38,6 +39,7 @@ contract oracle{
         heights.push(block.number);
         heights.push(block.number);
         heights.push(block.number);
+        //set();
     }
 
     function set() public {
@@ -49,17 +51,16 @@ contract oracle{
         mostRecent = startHeight;
     }
     
-    
     function tsToIndex(uint _time) public view returns (uint) {
-        if (_time >= timestamps[heights[heights.length-1]]) return latestSpot;
-        if (_time < timestamps[heights[0]] || heights.length < 3) return 0;
-        if (tsToSpot[_time] != 0) return tsToSpot[_time];
         uint size = heights.length;
+        if (_time >= timestamps[heights[size-1]]) return size-1;
+        if (_time < timestamps[heights[0]] || size < 3) return 0;
+        //if (tsToSpot[_time] != 0) return tsToSpot[_time];
         uint step = size>>2;
         for (uint i = size>>1; ;){
             uint currentTs = timestamps[heights[i]];
             uint prevTs = i < 1 ? 0 : timestamps[heights[i-1]];
-            uint nextTs = i+1 < heights.length ? timestamps[heights[i+1]]: timestamps[heights[heights.length-1]];
+            uint nextTs = i+1 < size ? timestamps[heights[i+1]]: timestamps[heights[size-1]];
             /*
                 p => prevTs
                 c => currentTs
@@ -71,11 +72,46 @@ contract oracle{
                 p, Target, c, n => p
                 Target, p, c, n => decreace i
             */
-            if (_time > nextTs)
-                i = (i+step) < heights.length ? i+step : heights.length-1;                
-            else if (_time > currentTs)
+            if (_time >= nextTs)
+                i = (i+step) < size ? i+step : size-1;                
+            else if (_time >= currentTs)
                 return i;
-            else if (_time > prevTs)
+            else if (_time >= prevTs)
+                return i-1;
+            else
+                i = i > step ? i-step : 0;
+            step = (step>>1) > 0? step>>1: 1;
+        }
+
+    }
+
+    function heightToIndex(uint _height) public view returns (uint) {
+        uint size = heights.length;
+        if (_height >= heights[size-1]) return size-1;
+        if (_height <= heights[0] || size == 3) return 0;
+        uint step = size>>2;
+        for (uint i = size>>1; ;){
+            uint currentHeight = heights[i];
+            uint prevHeight = i < 1 ? 0 : heights[i-1];
+            uint nextHeight = i+1 < size ? heights[i+1]: heights[size-1];
+            /*
+                p => prevTs
+                c => currentTs
+                n => nextTs
+                Target => _time
+                    On each iteration find where Target is in relation to others
+                p, c, n, Target => increace i
+                p, c, Target, n => c
+                p, Target, c, n => p
+                Target, p, c, n => decreace i
+            */
+            if (_height > nextHeight)
+                i = (i+step) < size ? i+step : size-1;
+            else if (_height == nextHeight)
+                return i+1 < size ? i+1 : size-1;
+            else if (_height >= currentHeight)
+                return i;
+            else if (_height >= prevHeight)
                 return i-1;
             else
                 i = i > step ? i-step : 0;
@@ -86,6 +122,7 @@ contract oracle{
 
     function medianPreviousIndecies(uint _index) public view returns (uint) {
         require(_index > 1, "index must be 2 or greater");
+        require(_index < heights.length, "index must be in array");
         uint first = tsToSpot[timestamps[heights[_index-2]]];
         uint second = tsToSpot[timestamps[heights[_index-1]]];
         uint third = tsToSpot[timestamps[heights[_index]]];
@@ -95,12 +132,8 @@ contract oracle{
         return second;
     }
 
-    function tsToPrice(uint _time) external view returns (uint) {
+    function fetchSpotAtTime(uint _time) external view returns (uint) {
         return medianPreviousIndecies(tsToIndex(_time));
-    }
-
-    function height() public view returns(uint){
-        return block.number;
     }
 
 }
