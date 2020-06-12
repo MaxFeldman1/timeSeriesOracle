@@ -57,21 +57,18 @@ contract('oracle', async function(accounts) {
 	async function heightToPrevSpot(height) {
 		var index = (await oracleInstance.heightToIndex(height)).toNumber();
 		var newHeight = (await oracleInstance.heights(index)).toNumber();
-		var newTs = (await oracleInstance.timestamps(newHeight)).toNumber();
-		return (await oracleInstance.tsToSpot(newTs)).toNumber();
+		return (await oracleInstance.heightToSpot(newHeight)).toNumber();
 	}
 
 	async function tsToPrevSpot(time) {
 		var index = (await oracleInstance.tsToIndex(time)).toNumber();
 		var newHeight = (await oracleInstance.heights(index)).toNumber();
-		var newTs = (await oracleInstance.timestamps(newHeight)).toNumber();
-		return (await oracleInstance.tsToSpot(newTs)).toNumber();
+		return (await oracleInstance.heightToSpot(newHeight)).toNumber();
 	}
 
 	async function indexToSpot(index) {
 		var height = (await oracleInstance.heights(index)).toNumber();
-		var ts = (await oracleInstance.timestamps(height)).toNumber();
-		return (await oracleInstance.tsToSpot(ts)) / inflator;
+		return (await oracleInstance.heightToSpot(height)) / inflator;
 	}
 
 	//in solidity block.number is always height of the next block, in web3 it is height of prev block
@@ -164,9 +161,7 @@ contract('oracle', async function(accounts) {
 		//set time in the future so that it will always be ahead of current time
 		time = parseInt((new Date()).getTime()/1000)*2;
 		await setPrice(1);
-		await helper.advanceTime(2);
 		await setPrice(2);
-		await helper.advanceTime(2);
 		await setPrice(10);
 		var median = 2;
 		var length = (await oracleInstance.heightsLength()).toNumber();
@@ -178,31 +173,26 @@ contract('oracle', async function(accounts) {
 		//last 3 elemets orderd by spot from 1=>smallest 2=>median 3=>largest [1, 2, 3]
 		res = (await oracleInstance.fetchSpotAtTime(time))/inflator;
 		assert.equal(res, median, "correct median of last 3 spots [1, 2, 3]");
-		await helper.advanceTime(2);
 		await setPrice(6);
 		median = 6;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>median 3=>largest [1, 3, 2]
 		res = (await oracleInstance.fetchSpotAtTime(time))/inflator;
 		assert.equal(res, median, "correct median of last 3 spots [1, 3, 2]");
-		await helper.advanceTime(2);
 		await setPrice(3);
 		median = 6;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>median 3=>largest [3, 2, 1]
 		res = (await oracleInstance.fetchSpotAtTime(time))/inflator;
 		assert.equal(res, median, "correct median of last 3 spots [3, 2, 1]");
-		await helper.advanceTime(2);
 		await setPrice(4);
 		median = 4;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>median 3=>largest [3, 1, 2]
 		res = (await oracleInstance.fetchSpotAtTime(time))/inflator;
 		assert.equal(res, median, "correct median of last 3 spots [3, 1, 2]");
-		await helper.advanceTime(2);
 		await setPrice(2);
 		median = 3;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>median 3=>largest [2, 3, 1]
 		res = (await oracleInstance.fetchSpotAtTime(time))/inflator;
 		assert.equal(res, median, "correct median of last 3 spots [2, 3, 1]");
-		await helper.advanceTime(2);
 		await setPrice(6);
 		median = 4;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>median 3=>largest [2, 1, 3]
@@ -210,37 +200,31 @@ contract('oracle', async function(accounts) {
 		assert.equal(res, median, "correct median of last 3 spots [2, 1, 3]");
 
 		//now test for when two of the last three elements have the same value
-		await helper.advanceTime(2);
 		await setPrice(2);
 		median = 2;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>largest [1, 2, 1]
 		res = (await oracleInstance.fetchSpotAtTime(time))/inflator;
 		assert.equal(res, median, "correct median of last 3 spots [1, 2, 1]");
-		await helper.advanceTime(2);
 		await setPrice(2);
 		median = 2;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>largest [2, 1, 1]
 		res = (await oracleInstance.fetchSpotAtTime(time))/inflator;
 		assert.equal(res, median, "correct median of last 3 spots [2, 1, 1]");
-		await helper.advanceTime(2);
 		await setPrice(3);
 		median = 2;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>largest [1, 1, 2]
 		res = (await oracleInstance.fetchSpotAtTime(time))/inflator;
 		assert.equal(res, median, "correct median of last 3 spots [1, 1, 2]");
-		await helper.advanceTime(2);
 		await setPrice(3);
 		median = 3;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>largest [1, 2, 2]
 		res = (await oracleInstance.fetchSpotAtTime(time))/inflator;
 		assert.equal(res, median, "correct median of last 3 spots [1, 2, 2]");
-		await helper.advanceTime(2);
 		await setPrice(2);
 		median = 3;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>largest [2, 2, 1]
 		res = (await oracleInstance.fetchSpotAtTime(time))/inflator;
 		assert.equal(res, median, "correct median of last 3 spots [2, 2, 1]");
-		await helper.advanceTime(2);
 		await setPrice(3);
 		median = 3;
 		//last 3 elemets orderd by spot from 1=>smallest 2=>largest [2, 1, 2]

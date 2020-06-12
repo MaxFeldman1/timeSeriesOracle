@@ -2,7 +2,7 @@ pragma solidity >=0.5.12;
 import "./interfaces/IUniswapV2Pair.sol";
 import "./interfaces/IERC20.sol";
 
-contract oracle{
+contract oracle {
     uint public latestSpot;
 
     //lists all block heights at which spot is collected
@@ -10,8 +10,8 @@ contract oracle{
     function heightsLength() external view returns (uint length) {length = heights.length;}
     //height => timestamp
     mapping(uint => uint) public timestamps;
-    //timestamp => price
-    mapping(uint => uint) public tsToSpot;
+    //height => price
+    mapping(uint => uint) public heightToSpot;
 
 
     uint startHeight;
@@ -47,7 +47,7 @@ contract oracle{
         latestSpot = token0Over1 ? inflator*res0/res1 : inflator*res1/res0;
         if (heights[heights.length-1] != block.number) heights.push(block.number);
         timestamps[block.number] = block.timestamp;
-        tsToSpot[block.timestamp] = latestSpot;
+        heightToSpot[block.number] = latestSpot;
         mostRecent = startHeight;
     }
     
@@ -55,7 +55,6 @@ contract oracle{
         uint size = heights.length;
         if (_time >= timestamps[heights[size-1]]) return size-1;
         if (_time < timestamps[heights[0]] || size < 3) return 0;
-        //if (tsToSpot[_time] != 0) return tsToSpot[_time];
         uint step = size>>2;
         for (uint i = size>>1; ;){
             uint currentTs = timestamps[heights[i]];
@@ -123,9 +122,9 @@ contract oracle{
     function medianPreviousIndecies(uint _index) public view returns (uint) {
         require(_index > 1, "index must be 2 or greater");
         require(_index < heights.length, "index must be in array");
-        uint first = tsToSpot[timestamps[heights[_index-2]]];
-        uint second = tsToSpot[timestamps[heights[_index-1]]];
-        uint third = tsToSpot[timestamps[heights[_index]]];
+        uint first = heightToSpot[heights[_index-2]];
+        uint second = heightToSpot[heights[_index-1]];
+        uint third = heightToSpot[heights[_index]];
         (first,second) = first > second ? (first, second) : (second,first);
         (second,third) = second > third ? (second, third) : (third,second);
         (first,second) = first > second ? (first, second) : (second,first);
