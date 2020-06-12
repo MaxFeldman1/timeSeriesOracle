@@ -1,8 +1,9 @@
-pragma solidity >=0.5.12;
+pragma solidity >=0.5.0;
 import "./interfaces/IUniswapV2Pair.sol";
 import "./interfaces/IERC20.sol";
+import "./interfaces/ITimeSeriesOracle.sol";
 
-contract oracle {
+contract oracle is ITimeSeriesOracle {
     uint public latestSpot;
 
     //lists all block heights at which spot is collected
@@ -119,7 +120,7 @@ contract oracle {
 
     }
 
-    function medianPreviousIndecies(uint _index) public view returns (uint) {
+    function medianPreviousIndecies(uint _index) public view returns (uint median) {
         require(_index > 1, "index must be 2 or greater");
         require(_index < heights.length, "index must be in array");
         uint first = heightToSpot[heights[_index-2]];
@@ -128,7 +129,7 @@ contract oracle {
         (first,second) = first > second ? (first, second) : (second,first);
         (second,third) = second > third ? (second, third) : (third,second);
         (first,second) = first > second ? (first, second) : (second,first);
-        return second;
+        median = second;
     }
 
     function fetchSpotAtTime(uint _time) external view returns (uint) {
