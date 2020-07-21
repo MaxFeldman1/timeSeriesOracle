@@ -44,6 +44,8 @@ contract oracle is ITimeSeriesOracle {
     }
 
     function set() public {
+        //we don't let contracts set the spot because they can manipulate price without consequence
+        require(msg.sender == tx.origin);
         (uint res0, uint res1, ) = IUniswapV2Pair(uniswapV2PairAddress).getReserves();
         latestSpot = token0Over1 ? inflator*res0/res1 : inflator*res1/res0;
         if (heights[heights.length-1] != block.number) heights.push(block.number);
