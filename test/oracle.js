@@ -1,8 +1,7 @@
-const token = artifacts.require("./token.sol");
-const uniswapFactory = artifacts.require('./UniswapV2Factory.sol');
-const uniswapPair = artifacts.require('./UniswapV2Pair.sol');
-const uniswapERC20 = artifacts.require('./UniswapV2ERC20.sol');
-const oracle = artifacts.require("./oracle.sol");
+const token = artifacts.require("token");
+const uniswapFactory = artifacts.require('UniswapV2Factory');
+const uniswapPair = artifacts.require('UniswapV2Pair');
+const oracle = artifacts.require("oracle");
 
 const helper = require("../helper/helper.js");
 

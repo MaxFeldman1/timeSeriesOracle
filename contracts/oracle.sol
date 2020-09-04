@@ -59,30 +59,24 @@ contract oracle is ITimeSeriesOracle {
         if (_time >= timestamps[heights[size-1]]) return size-1;
         if (_time < timestamps[heights[0]] || size < 3) return 0;
         uint step = size>>2;
-        for (uint i = size>>1; ;){
+        for (uint i = size>>1; ;step = step > 1? step>>1: 1){
             uint currentTs = timestamps[heights[i]];
-            uint prevTs = i < 1 ? 0 : timestamps[heights[i-1]];
             uint nextTs = i+1 < size ? timestamps[heights[i+1]]: timestamps[heights[size-1]];
             /*
-                p => prevTs
                 c => currentTs
                 n => nextTs
                 Target => _time
                     On each iteration find where Target is in relation to others
-                p, c, n, Target => increace i
-                p, c, Target, n => c
-                p, Target, c, n => p
-                Target, p, c, n => decreace i
+                c, n, Target => increace i
+                c, Target, n => c
+                Target, c, n => decreace i
             */
             if (_time >= nextTs)
                 i = (i+step) < size ? i+step : size-1;                
             else if (_time >= currentTs)
                 return i;
-            else if (_time >= prevTs)
-                return i-1;
             else
                 i = i > step ? i-step : 0;
-            step = (step>>1) > 0? step>>1: 1;
         }
 
     }
@@ -92,20 +86,17 @@ contract oracle is ITimeSeriesOracle {
         if (_height >= heights[size-1]) return size-1;
         if (_height <= heights[0] || size == 3) return 0;
         uint step = size>>2;
-        for (uint i = size>>1; ;){
+        for (uint i = size>>1; ;step = step > 1? step>>1: 1){
             uint currentHeight = heights[i];
-            uint prevHeight = i < 1 ? 0 : heights[i-1];
             uint nextHeight = i+1 < size ? heights[i+1]: heights[size-1];
             /*
-                p => prevTs
                 c => currentTs
                 n => nextTs
                 Target => _time
                     On each iteration find where Target is in relation to others
-                p, c, n, Target => increace i
-                p, c, Target, n => c
-                p, Target, c, n => p
-                Target, p, c, n => decreace i
+                c, n, Target => increace i
+                c, Target, n => c
+                Target, c, n => decreace i
             */
             if (_height > nextHeight)
                 i = (i+step) < size ? i+step : size-1;
@@ -113,11 +104,8 @@ contract oracle is ITimeSeriesOracle {
                 return i+1 < size ? i+1 : size-1;
             else if (_height >= currentHeight)
                 return i;
-            else if (_height >= prevHeight)
-                return i-1;
             else
                 i = i > step ? i-step : 0;
-            step = (step>>1) > 0? step>>1: 1;
         }
 
     }
